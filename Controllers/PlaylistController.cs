@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using MegaDiscoverWeekly.Interfaces;
 using SpotifyAPI.Web;
 
 namespace MegaDiscoverWeekly.Controllers
@@ -9,20 +10,25 @@ namespace MegaDiscoverWeekly.Controllers
     [Route("[controller]")]
     public class PlaylistController : ControllerBase
     {
-        private readonly string TOKEN;
+        private readonly IPlaylistService playlistService;
 
-        public PlaylistController(IConfiguration configuration)
+        public PlaylistController(IConfiguration configuration, IPlaylistService playlistService)
         {
-            TOKEN = configuration.GetValue<string>("Spotify:Token");
+            this.playlistService = playlistService;
         }
-        [HttpGet("{playlistId}")]
-        public async Task<FullPlaylist> Get(string playlistId)
+
+        [HttpGet("/discoverweekly/{userId}")]
+        public async Task<SimplePlaylist> GetUsersDiscoverWeekly(string userId)
         {
-            var spotify = new SpotifyClient(TOKEN);
-
-            var playlist = await spotify.Playlists.Get(playlistId);
-
-            return playlist;
+            return await playlistService.GetUsersDiscoverWeekly(userId);
         }
+        // [HttpPost]
+        // public async Task<FullPlaylist> Create()
+        // {
+        //     PlaylistCreateRequest playlistCreateRequest = new PlaylistCreateRequest("Mega Discover Weekly");
+
+        //     var playlist = await spotifyClient.Playlists.Create("", playlistCreateRequest);
+        //     return playlist;
+        // }
     }
 }

@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using MegaDiscoverWeekly.Interfaces;
+using MegaDiscoverWeekly.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -27,6 +29,8 @@ namespace MegaDiscoverWeekly
         {
             services.AddControllers();
             services.AddSwaggerGen();
+
+            services.AddScoped<IPlaylistService, PlaylistService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
