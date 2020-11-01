@@ -32,5 +32,17 @@ namespace MegaDiscoverWeekly.Services
             
             return discoverWeekly;
         }
+
+        private async Task<FullPlaylist> Create(string userId, string name)
+        {
+            var createRequest = new PlaylistCreateRequest(name);
+
+            return await spotifyClient.Playlists.Create(userId, createRequest);
+        }
+
+        private void BuildMegaDiscoverWeekly(string userId)
+        {
+            // build the mega discover weekly tracklist
+        }
     }
 }
