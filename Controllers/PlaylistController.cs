@@ -1,9 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 using SpotifyAPI.Web;
 
 namespace MegaDiscoverWeekly.Controllers
@@ -12,10 +9,16 @@ namespace MegaDiscoverWeekly.Controllers
     [Route("[controller]")]
     public class PlaylistController : ControllerBase
     {
+        private readonly string TOKEN;
+
+        public PlaylistController(IConfiguration configuration)
+        {
+            TOKEN = configuration.GetValue<string>("Spotify:Token");
+        }
         [HttpGet("{playlistId}")]
         public async Task<FullPlaylist> Get(string playlistId)
         {
-            var spotify = new SpotifyClient("");
+            var spotify = new SpotifyClient(TOKEN);
 
             var playlist = await spotify.Playlists.Get(playlistId);
 
