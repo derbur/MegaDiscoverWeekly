@@ -12,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.OpenApi.Models;
 
 namespace MegaDiscoverWeekly
 {
@@ -28,7 +29,9 @@ namespace MegaDiscoverWeekly
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
-            services.AddSwaggerGen();
+            services.AddSwaggerGen(c => {
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Mega Discover Weekly API", Version = "v1" });
+            });
 
             services.AddScoped<IPlaylistService, PlaylistService>();
         }
