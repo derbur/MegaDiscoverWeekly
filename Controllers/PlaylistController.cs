@@ -18,9 +18,9 @@ namespace MegaDiscoverWeekly.Controllers
         }
 
         [HttpGet("/discoverweekly/{userId}")]
-        public async Task<SimplePlaylist> GetUsersDiscoverWeekly(string userId)
+        public async Task<bool> GetUsersDiscoverWeekly(string userId, string[] userIds)
         {
-            return await playlistService.GetUsersDiscoverWeekly(userId);
+            return await playlistService.CreateMegaDiscoverWeekly(userId, userIds);
         }
         // [HttpPost]
         // public async Task<FullPlaylist> Create()
