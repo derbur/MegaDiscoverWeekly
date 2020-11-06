@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using MegaDiscoverWeekly.Interfaces;
 using SpotifyAPI.Web;
+using System.Linq;
 
 namespace MegaDiscoverWeekly.Services
 {
@@ -17,7 +18,34 @@ namespace MegaDiscoverWeekly.Services
             spotifyClient = new SpotifyClient(_token);
         }
 
-        public async Task<SimplePlaylist> GetUsersDiscoverWeekly(string userId)
+        # region Playlist Operations
+
+        public async Task<FullPlaylist> CreatePlaylist(string userId, string name)
+        {
+            var createRequest = new PlaylistCreateRequest(name);
+
+            return await spotifyClient.Playlists.Create(userId, createRequest);
+        }
+        
+        public async Task<bool> UpdatePlaylist(string userId, string playlistName, IEnumerable<string> playlistItems)
+        {
+            
+            var playlistPage = await spotifyClient.Playlists.GetUsers(userId);
+            SimplePlaylist playlistToUpdate = new SimplePlaylist();
+            
+            await foreach(var playlist in spotifyClient.Paginate(playlistPage))
+            {
+                if(playlist.Name.ToLower() == playlistName.ToLower())
+                {
+                    playlistToUpdate = playlist;
+                    break;
+                }
+            }
+
+            return await UpdatePlaylistItems(playlistToUpdate.Id, playlistItems);
+        }
+
+        public async Task<SimplePlaylist> GetDiscoverWeeklyPlaylist(string userId)
         {
             var playlistPage = await spotifyClient.Playlists.GetUsers(userId);
             SimplePlaylist discoverWeekly = new SimplePlaylist();
@@ -33,39 +61,27 @@ namespace MegaDiscoverWeekly.Services
             
             return discoverWeekly;
         }
+            
+        #endregion
+        
+
+        #region Playlist Tracks Operations
 
         private async Task<List<PlaylistTrack<IPlayableItem>>> GetPlaylistTracks(string playlistId)
         {
-            // Use the paging before returning?
             var playlist = await spotifyClient.Playlists.Get(playlistId);
             List<PlaylistTrack<IPlayableItem>> tracks = new List<PlaylistTrack<IPlayableItem>>();
+            // Use the paging before returning?
             tracks = playlist.Tracks.Items;
 
             return tracks;
         }
 
-        private async Task<FullPlaylist> CreatePlaylist(string userId, string name)
+        public async Task<List<string>> GetPlaylistTrackUris(IEnumerable<string> playlistIds)
         {
-            var createRequest = new PlaylistCreateRequest(name);
-
-            return await spotifyClient.Playlists.Create(userId, createRequest);
-        }
-
-        // Need to break this big boi up
-        public async Task<bool> CreateMegaDiscoverWeekly(string userId, string[] userIds)
-        {
-            List<string> playlistIds = new List<string>();
             List<string> trackUris = new List<string>();
-
-            // Build the mega discover weekly playlist
-            // 1. Get Discover Weekly playlists for provided users
-            foreach(var id in userIds)
-            {
-                var playlist = await this.GetUsersDiscoverWeekly(id);
-                playlistIds.Add(playlist.Id);
-            }
-
-            // 2. Get uris for all tracks to create Mega Playlist
+            
+            // Get uris for all tracks to create Mega Playlist
             foreach(var id in playlistIds)
             {
                 var items = await this.GetPlaylistTracks(id);
@@ -78,15 +94,19 @@ namespace MegaDiscoverWeekly.Services
                 }
             }
 
-            // 3. Create/Update Mega Discover Weekly playlist
-            // Update this logic to check if this playlist exists first
-            var mdPlaylist = await this.CreatePlaylist(userId, "Mega Discover Weekly");
+            return trackUris;
+        }
 
-            PlaylistReplaceItemsRequest replaceItemsRequest = new PlaylistReplaceItemsRequest(trackUris);
+        private async Task<bool> UpdatePlaylistItems(string playlistId, IEnumerable<string> playlistItems)
+        {
+            PlaylistReplaceItemsRequest replaceItemsRequest = new PlaylistReplaceItemsRequest(playlistItems.ToList());
 
-            var replaceResponse = await spotifyClient.Playlists.ReplaceItems(mdPlaylist.Id, replaceItemsRequest);
+            var replaceResponse = await spotifyClient.Playlists.ReplaceItems(playlistId, replaceItemsRequest);
 
             return replaceResponse;
         }
+            
+        #endregion
+
     }
 }
